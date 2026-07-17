@@ -12,8 +12,11 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    @Value("${mail.from}")
-    private String fromEmail;
+    @Value("${MAIL_USERNAME:}")
+    private String username;
+
+    @Value("${MAIL_PASSWORD:}")
+    private String password;
 
     // ===============================
     // BASIC MAIL
@@ -56,7 +59,7 @@ public class EmailService {
 
             SimpleMailMessage message = new SimpleMailMessage();
 
-            message.setFrom(fromEmail);   // system mail (must)
+           // message.setFrom(fromEmail);   // system mail (must)
             message.setTo(to.trim());     // 🔥 trim removes hidden spaces
             message.setSubject(subject);
             message.setText(body);
@@ -67,7 +70,7 @@ public class EmailService {
             }
 
             System.out.println("========== MAIL DEBUG ==========");
-            System.out.println("FROM : " + fromEmail);
+           // System.out.println("FROM : " + fromEmail);
             System.out.println("TO   : " + to);
             System.out.println("HOST : smtp-relay.brevo.com");
             System.out.println("===============================");

@@ -178,6 +178,13 @@ public class ApplyController {
 
     }
 
+    @GetMapping("/applications")
+    public List<Application> getAllApplications() {
+
+        return applicationRepository.findAll();
+
+    }
+
     // ===============================
     // EMAIL FUNCTION
     // ===============================

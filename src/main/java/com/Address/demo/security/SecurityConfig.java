@@ -75,6 +75,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/jobs/active-users").hasAuthority("RECRUITER")
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         //.requestMatchers("/api/jobs/my-applicants").hasAuthority("ADMIN")
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/jobs/applications")
+                        .hasAuthority("ADMIN")
 
                         // ======================
                         // STUDENT ONLY
