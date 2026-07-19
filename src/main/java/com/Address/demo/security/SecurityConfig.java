@@ -107,6 +107,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/jobs/send-otp").permitAll()
                         .requestMatchers("/api/jobs/verify-otp").permitAll()
                         .requestMatchers("/api/jobs/reset-password").permitAll()
+                        .requestMatchers("/api/jobs/notifications")
+                        .hasAnyAuthority("RECRUITER", "ADMIN")
+
+                        .requestMatchers("/api/jobs/notifications/count")
+                        .hasAnyAuthority("RECRUITER", "ADMIN")
                         // Any other request
                         .anyRequest().authenticated()
                 )
