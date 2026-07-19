@@ -112,6 +112,8 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/jobs/notifications/count")
                         .hasAnyAuthority("RECRUITER", "ADMIN")
+                        .requestMatchers("/api/admin/notifications")
+                        .hasAnyAuthority("ADMIN", "RECRUITER")
                         // Any other request
                         .anyRequest().authenticated()
                 )
