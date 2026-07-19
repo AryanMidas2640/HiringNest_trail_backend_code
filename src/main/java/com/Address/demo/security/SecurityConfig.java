@@ -1,19 +1,13 @@
 package com.Address.demo.security;
-import org.springframework.security.config.Customizer;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-//import org.springframework.context.annotation.Bean;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 public class SecurityConfig {
@@ -28,7 +22,6 @@ public class SecurityConfig {
     }
 
 
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
@@ -37,58 +30,121 @@ public class SecurityConfig {
                 // Disable CSRF
                 .csrf(csrf -> csrf.disable())
 
+                // CORS
                 .cors(Customizer.withDefaults())
 
-                // Exception handler
+                // Exception handling
                 .exceptionHandling(ex ->
                         ex.authenticationEntryPoint(entryPoint)
                 )
 
-                // Stateless session
+                // Stateless JWT
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // Authorization Rules
+
                 .authorizeHttpRequests(auth -> auth
+
 
                         // ======================
                         // PUBLIC APIs
                         // ======================
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/jobs/login").permitAll()
-                        .requestMatchers("/api/jobs/create-user").hasAuthority("ADMIN")                        .requestMatchers("/swagger-ui.html").permitAll()
+
+                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                        .permitAll()
+
+                        .requestMatchers("/api/jobs/login")
+                        .permitAll()
+
+                        .requestMatchers("/api/jobs/send-otp")
+                        .permitAll()
+
+                        .requestMatchers("/api/jobs/verify-otp")
+                        .permitAll()
+
+                        .requestMatchers("/api/jobs/reset-password")
+                        .permitAll()
+
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
                                 "/v3/api-docs.yaml"
-                        ).permitAll()
+                        )
+                        .permitAll()
+
+
+
+                        // ======================
+                        // ADMIN + RECRUITER NOTIFICATION
+                        // ======================
+
+                        .requestMatchers("/api/admin/notifications")
+                        .hasAnyAuthority("ADMIN", "RECRUITER")
+
+
+                        // ======================
+                        // ADMIN ONLY
+                        // ======================
+
+                        .requestMatchers("/api/jobs/create-user")
+                        .hasAuthority("ADMIN")
+
+                        .requestMatchers("/api/admin/**")
+                        .hasAuthority("ADMIN")
+
+                        .requestMatchers("/api/jobs/applications")
+                        .hasAuthority("ADMIN")
+
+
+
                         // ======================
                         // RECRUITER ONLY
                         // ======================
-                        .requestMatchers("/api/jobs/add").permitAll()
-                        .requestMatchers("/api/jobs/update/**").hasAuthority("RECRUITER")
-                        .requestMatchers("/api/jobs/delete/**").hasAuthority("RECRUITER")
+
+                        .requestMatchers("/api/jobs/add")
+                        .permitAll()
+
+                        .requestMatchers("/api/jobs/update/**")
+                        .hasAuthority("RECRUITER")
+
+                        .requestMatchers("/api/jobs/delete/**")
+                        .hasAuthority("RECRUITER")
+
                         .requestMatchers("/api/jobs/my-applicants")
                         .hasAnyAuthority("RECRUITER", "ADMIN")
-                        .requestMatchers("/api/jobs/active-users").hasAuthority("RECRUITER")
-                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                        //.requestMatchers("/api/jobs/my-applicants").hasAuthority("ADMIN")
-                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/jobs/applications")
-                        .hasAuthority("ADMIN")
+
+                        .requestMatchers("/api/jobs/active-users")
+                        .hasAuthority("RECRUITER")
+
+                        .requestMatchers("/api/jobs/notifications")
+                        .hasAnyAuthority("RECRUITER", "ADMIN")
+
+                        .requestMatchers("/api/jobs/notifications/count")
+                        .hasAnyAuthority("RECRUITER", "ADMIN")
+
+
 
                         // ======================
                         // STUDENT ONLY
                         // ======================
-                        .requestMatchers("/api/jobs/apply/**").hasAuthority("STUDENT")
-                        .requestMatchers("/api/jobs/my-applied").hasAuthority("STUDENT")
-                        .requestMatchers("/api/student/**").hasAuthority("STUDENT")
+
+                        .requestMatchers("/api/jobs/apply/**")
+                        .hasAuthority("STUDENT")
+
+                        .requestMatchers("/api/jobs/my-applied")
+                        .hasAuthority("STUDENT")
+
+                        .requestMatchers("/api/student/**")
+                        .hasAuthority("STUDENT")
+
+
 
                         // ======================
-                        // BOTH
+                        // COMMON
                         // ======================
+
                         .requestMatchers(HttpMethod.GET, "/api/jobs/all")
                         .hasAnyAuthority("STUDENT", "RECRUITER", "ADMIN")
 
@@ -104,21 +160,15 @@ public class SecurityConfig {
                         .requestMatchers("/api/resume/parse")
                         .hasAnyAuthority("STUDENT", "RECRUITER")
 
-                        .requestMatchers("/api/jobs/send-otp").permitAll()
-                        .requestMatchers("/api/jobs/verify-otp").permitAll()
-                        .requestMatchers("/api/jobs/reset-password").permitAll()
-                        .requestMatchers("/api/jobs/notifications")
-                        .hasAnyAuthority("RECRUITER", "ADMIN")
 
-                        .requestMatchers("/api/jobs/notifications/count")
-                        .hasAnyAuthority("RECRUITER", "ADMIN")
-                        .requestMatchers("/api/admin/notifications")
-                        .hasAnyAuthority("ADMIN", "RECRUITER")
-                        // Any other request
-                        .anyRequest().authenticated()
+                        // Anything else
+                        .anyRequest()
+                        .authenticated()
                 )
 
+
                 .httpBasic(httpBasic -> httpBasic.disable());
+
 
         // JWT Filter
         http.addFilterBefore(
@@ -126,10 +176,8 @@ public class SecurityConfig {
                 UsernamePasswordAuthenticationFilter.class
         );
 
+
         return http.build();
     }
-
-
-
 
 }
