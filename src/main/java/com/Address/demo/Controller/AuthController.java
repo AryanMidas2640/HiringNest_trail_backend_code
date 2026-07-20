@@ -23,6 +23,10 @@ import com.Address.demo.dto.OtpVerifyRequest;
 import com.Address.demo.dto.ResetPasswordRequest;
 import com.Address.demo.model.Otp;
 import com.Address.demo.repositry.OtpRepository;
+import com.Address.demo.dto.ChangePasswordRequest;
+import com.Address.demo.dto.UpdateProfileRequest;
+import java.util.Optional;
+
 
 import java.time.LocalDateTime;
 import java.util.Random;
@@ -171,6 +175,120 @@ public class AuthController {
         return res;
     }
 
+    @PostMapping("/change-password")
+    public Map<String, Object> changePassword(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody ChangePasswordRequest request) {
+
+        String token = authHeader.replace("Bearer ", "");
+
+        // JWT se email nikalo
+        String email = jwtHelper.getEmailFromToken(token);
+
+        User user = userRepositry.findByEmail(email)
+                .orElseThrow(() -> new ApiException("User not found"));
+
+        // Current password verify
+        if (!passwordEncoder.matches(
+                request.getCurrentPassword(),
+                user.getPassword())) {
+
+            throw new ApiException("Current password is incorrect");
+        }
+
+        // Optional: same password allow mat karo
+        if (passwordEncoder.matches(
+                request.getNewPassword(),
+                user.getPassword())) {
+
+            throw new ApiException("New password cannot be same as current password");
+        }
+
+        // New password save
+        user.setPassword(
+                passwordEncoder.encode(request.getNewPassword())
+        );
+
+        userRepositry.save(user);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Password changed successfully");
+
+        return response;
+    }
+
+    @PutMapping("/update-profile")
+    public Map<String, Object> updateProfile(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody UpdateProfileRequest request) {
+
+        String token = authHeader.replace("Bearer ", "");
+
+        String email = jwtHelper.getEmailFromToken(token);
+
+        User user = userRepositry.findByEmail(email)
+                .orElseThrow(() -> new ApiException("User not found"));
+
+        // Username duplicate check
+        userRepositry.findByUsername(request.getUsername())
+                .ifPresent(existingUser -> {
+                    if (!existingUser.getId().equals(user.getId())) {
+                        throw new ApiException("Username already exists");
+                    }
+                });
+
+        // Email duplicate check
+        userRepositry.findByEmail(request.getEmail())
+                .ifPresent(existingUser -> {
+                    if (!existingUser.getId().equals(user.getId())) {
+                        throw new ApiException("Email already exists");
+                    }
+                });
+
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+
+        userRepositry.save(user);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Profile updated successfully");
+
+        return response;
+    }
+
+    @GetMapping("/profile")
+    public Map<String, Object> getProfile(
+            @RequestHeader("Authorization") String authHeader) {
+
+        System.out.println("PROFILE CONTROLLER HIT");
+
+        String token = authHeader.replace("Bearer ", "");
+
+        String email = jwtHelper.getEmailFromToken(token);
+
+        System.out.println("EMAIL = " + email);
+
+        Optional<User> optionalUser = userRepositry.findByEmail(email);
+
+        System.out.println("USER FOUND = " + optionalUser.isPresent());
+
+        User user = optionalUser
+                .orElseThrow(() -> new ApiException("User not found"));
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("success", true);
+        response.put("username", user.getUsername());
+        response.put("email", user.getEmail());
+        response.put("role", user.getRole());
+        response.put("tenantId", user.getTenantId());
+        response.put("online", user.isOnline());
+        response.put("lastLogin", user.getLastLogin());
+
+        return response;
+    }
 
 
     @PostMapping("/create-user")

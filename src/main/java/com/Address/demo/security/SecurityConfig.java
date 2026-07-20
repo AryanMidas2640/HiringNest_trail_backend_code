@@ -160,6 +160,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/resume/parse")
                         .hasAnyAuthority("STUDENT", "RECRUITER")
 
+                        .requestMatchers("/api/jobs/profile")
+                        .hasAnyAuthority("ADMIN", "STUDENT", "RECRUITER")
+
 
                         // Anything else
                         .anyRequest()
